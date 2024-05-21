@@ -1,5 +1,7 @@
 package com.gymi.domain;
 
+import com.gymi.util.TimeUtil;
+
 import java.sql.Timestamp;
 import java.util.Set;
 
@@ -34,11 +36,18 @@ public class Session {
         if(isTooCloseToSession(dateTimeProvider.getUtcNow())){
             throw new Exception("Cannot cancel reservation too close to session");
         }
+
+        if(!participants.remove(participant.getId())){
+            throw new Exception("Reservation not found");
+        }
     }
 
     private boolean isTooCloseToSession(Timestamp utcNow){
         final int MIN_HOURS = 24;
         // sessiontime - current time < 24 hs - not possible be cancelled
-        return  false;
+       int numbeOfHourBetweenSessionTimeAndCancelTime = TimeUtil.getHoursBetween(startTime, utcNow);
+       if(numbeOfHourBetweenSessionTimeAndCancelTime < MIN_HOURS)
+           return true;
+       return false;
     }
 }
