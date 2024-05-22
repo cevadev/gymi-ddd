@@ -1,5 +1,8 @@
 package com.gymi.domain;
 
+import com.gymi.exception.GymResult;
+import com.gymi.exception.ParticipantErrors;
+import com.gymi.exception.SessionErrors;
 import com.gymi.util.TimeUtil;
 
 import java.sql.Timestamp;
@@ -26,20 +29,27 @@ public class Session {
         this.endTime = endTime;
     }
 
-    public void reserveSpot(Participant participant) throws Exception {
+    // A session cannot contain more than the maximum number of participants
+    public GymResult reserveSpot(Participant participant) throws Exception {
         if(participants.size() >= maxParticipants)
-            throw new Exception("Cannot have more participants than  " + maxParticipants);
+            return GymResult.failure(SessionErrors.NO_MORE_PARTICIPANTS);
+            //throw new Exception("Cannot have more participants than  " + maxParticipants);
         participants.add(participant.getId());
+        return GymResult.success();
     }
 
-    public void cancellReservation(Participant participant, IDateTimeProvider dateTimeProvider) throws Exception {
+    // A reservation cannot be canceled for free less than 24 hours before the session starts
+    public GymResult cancellReservation(Participant participant, IDateTimeProvider dateTimeProvider) throws Exception {
         if(isTooCloseToSession(dateTimeProvider.getUtcNow())){
-            throw new Exception("Cannot cancel reservation too close to session");
+            return GymResult.failure(SessionErrors.NOT_POSSIBLE_CANCEL_SESSION);
+            //throw new Exception("Cannot cancel reservation too close to session date");
         }
 
         if(!participants.remove(participant.getId())){
-            throw new Exception("Reservation not found");
+            return GymResult.failure(SessionErrors.RESERVATION_NOT_FOUND);
+            //throw new Exception("Reservation not found");
         }
+        return GymResult.success();
     }
 
     private boolean isTooCloseToSession(Timestamp utcNow){
